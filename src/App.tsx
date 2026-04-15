@@ -26,10 +26,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Player, Match, MatchEvent, TournamentStats, RealPlayerStats, Tournament } from './types';
 
 // Import Assets
-import mainBg from './src/assets/main_bg.jpeg';
-import tourneyBg from './src/assets/tourney_bg.jpg';
-import trophyIcon from './src/assets/trophy.webp';
-import backgroundMusic from './src/assets/music.weba';
+import mainBg from './assets/main_bg.jpeg';
+import tourneyBg from './assets/tourney_bg.jpg';
+import trophyIcon from './assets/trophy.webp';
+import backgroundMusic from './assets/music.weba';
 
 // --- Theme Constants ---
 const COLORS = {
