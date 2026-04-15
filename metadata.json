@@ -1,0 +1,6 @@
+{
+  "name": "UCL FIFA Stats Tracker",
+  "description": "Champions League themed statistics tracker for FIFA tournaments with friends. Track goals, assists, cards, and standings.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
