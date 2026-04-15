@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+@layer components {
+  .ucl-main-bg {
+    background-image: url('/main_bg.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  
+  .ucl-tourney-bg {
+    background-image: url('/tourney_bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+}

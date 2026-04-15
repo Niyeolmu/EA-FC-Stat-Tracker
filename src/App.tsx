@@ -359,10 +359,7 @@ export default function App() {
     <div className={`min-h-screen ${COLORS.bg} ${COLORS.text} font-sans selection:bg-[#0047e0]/30 relative`}>
       {/* Global Background for Tournament View (when not in menu) */}
       {view !== 'menu' && (
-        <div 
-          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: 'url(/tourney_bg.jpg)' }}
-        >
+        <div className="fixed inset-0 z-0 ucl-tourney-bg">
           <div className="absolute inset-0 bg-[#02071a]/85" />
         </div>
       )}
@@ -381,10 +378,7 @@ export default function App() {
             className="min-h-screen flex flex-col items-center justify-center p-6 relative"
           >
             {/* Background Image with Overlay */}
-            <div 
-              className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: 'url(/main_bg.jpeg)' }}
-            >
+            <div className="absolute inset-0 z-0 ucl-main-bg">
               <div className="absolute inset-0 bg-[#02071a]/60" />
             </div>
 
