@@ -25,6 +25,12 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Player, Match, MatchEvent, TournamentStats, RealPlayerStats, Tournament } from './types';
 
+// Import Assets
+import mainBg from './assets/main_bg.jpeg';
+import tourneyBg from './assets/tourney_bg.jpg';
+import trophyIcon from './assets/trophy.webp';
+import backgroundMusic from './assets/music.weba';
+
 // --- Theme Constants ---
 const COLORS = {
   bg: 'bg-[#02071a]',
@@ -361,14 +367,14 @@ export default function App() {
       {view !== 'menu' && (
         <div 
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: 'url(/tourney_bg.jpg)' }}
+          style={{ backgroundImage: `url(${tourneyBg})` }}
         >
           <div className="absolute inset-0 bg-[#02071a]/85" />
         </div>
       )}
       <audio 
         ref={audioRef}
-        src="/music.weba"
+        src={backgroundMusic}
         loop
       />
       <AnimatePresence mode="wait">
@@ -383,7 +389,7 @@ export default function App() {
             {/* Background Image with Overlay */}
             <div 
               className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: 'url(/main_bg.jpeg)' }}
+              style={{ backgroundImage: `url(${mainBg})` }}
             >
               <div className="absolute inset-0 bg-[#02071a]/60" />
             </div>
@@ -392,7 +398,7 @@ export default function App() {
             <div className="relative z-10 flex flex-col items-center w-full max-w-md">
               <div className="flex flex-col items-center mb-12 text-center">
                 <img 
-                  src="/trophy.webp" 
+                  src={trophyIcon} 
                   alt="UCL Trophy"
                   className="w-32 h-32 object-contain mb-4 drop-shadow-[0_0_20px_rgba(195,155,75,0.4)]"
                   referrerPolicy="no-referrer"
@@ -478,7 +484,7 @@ export default function App() {
             <header className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
               <div className="flex items-center gap-3 font-extrabold tracking-widest uppercase text-[#c39b4b] cursor-pointer" onClick={exitTournament}>
                 <img 
-                  src="/trophy.webp" 
+                  src={trophyIcon} 
                   alt="UCL Trophy"
                   className="w-8 h-8 object-contain"
                   referrerPolicy="no-referrer"
