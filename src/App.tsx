@@ -57,6 +57,47 @@ export default function App() {
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [statsSort, setStatsSort] = useState<{ key: keyof RealPlayerStats, direction: 'asc' | 'desc' }>({ key: 'goals', direction: 'desc' });
 
+  // Extract unique real player names per manager for suggestions
+  const realPlayerNamesByManager = useMemo(() => {
+    const map: Record<string, Set<string>> = {};
+    
+    tournaments.forEach(t => {
+      (t.matches || []).forEach(m => {
+        (m.events || []).forEach(e => {
+          if (e.playerId && e.realPlayerName) {
+            if (!map[e.playerId]) map[e.playerId] = new Set();
+            map[e.playerId].add(e.realPlayerName);
+          }
+        });
+      });
+    });
+
+    matches.forEach(m => {
+      (m.events || []).forEach(e => {
+        if (e.playerId && e.realPlayerName) {
+          if (!map[e.playerId]) map[e.playerId] = new Set();
+          map[e.playerId].add(e.realPlayerName);
+        }
+      });
+    });
+
+    // Also include from the match currently being edited
+    if (editingMatch) {
+      (editingMatch.events || []).forEach(e => {
+        if (e.playerId && e.realPlayerName) {
+          if (!map[e.playerId]) map[e.playerId] = new Set();
+          map[e.playerId].add(e.realPlayerName);
+        }
+      });
+    }
+
+    const result: Record<string, string[]> = {};
+    Object.keys(map).forEach(pid => {
+      result[pid] = Array.from(map[pid]).sort();
+    });
+    return result;
+  }, [tournaments, matches, editingMatch]);
+
   // --- Audio State ---
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [volume, setVolume] = useState(0.5);
@@ -368,6 +409,15 @@ export default function App() {
         src="/music.weba"
         loop
       />
+
+      {players.map(p => (
+        <datalist key={p.id} id={`real-player-names-${p.id}`}>
+          {(realPlayerNamesByManager[p.id] || []).map(name => (
+            <option key={name} value={name} />
+          ))}
+        </datalist>
+      ))}
+
       <AnimatePresence mode="wait">
         {view === 'menu' ? (
           <motion.div 
@@ -927,7 +977,7 @@ export default function App() {
                   <input 
                     type="number" 
                     value={editingMatch.homeScore}
-                    onChange={e => setEditingMatch({ ...editingMatch, homeScore: parseInt(e.target.value) || 0 })}
+                    onChange={e => setEditingMatch({ ...editingMatch, homeScore: Math.max(0, parseInt(e.target.value) || 0) })}
                     className="w-16 h-16 bg-white/5 border border-white/10 rounded-md text-center text-3xl font-black mt-4 outline-none focus:border-[#0047e0]"
                   />
                 </div>
@@ -938,7 +988,7 @@ export default function App() {
                   <input 
                     type="number" 
                     value={editingMatch.awayScore}
-                    onChange={e => setEditingMatch({ ...editingMatch, awayScore: parseInt(e.target.value) || 0 })}
+                    onChange={e => setEditingMatch({ ...editingMatch, awayScore: Math.max(0, parseInt(e.target.value) || 0) })}
                     className="w-16 h-16 bg-white/5 border border-white/10 rounded-md text-center text-3xl font-black mt-4 outline-none focus:border-[#0047e0]"
                   />
                 </div>
@@ -954,7 +1004,7 @@ export default function App() {
                   <button 
                     onClick={() => setEditingMatch({
                       ...editingMatch,
-                      events: [...editingMatch.events, { type: 'goal', playerId: editingMatch.homePlayerId }]
+                      events: [...editingMatch.events, { type: 'goal', playerId: '', realPlayerName: '' }]
                     })}
                     className="text-[10px] font-bold text-[#0047e0] hover:underline uppercase tracking-widest"
                   >
@@ -969,9 +1019,31 @@ export default function App() {
                         <select 
                           value={event.type}
                           onChange={e => {
+                            const newType = e.target.value as any;
+                            const oldType = event.type;
                             const newEvents = [...editingMatch.events];
-                            newEvents[idx].type = e.target.value as any;
-                            setEditingMatch({ ...editingMatch, events: newEvents });
+                            newEvents[idx].type = newType;
+                            
+                            let newHomeScore = editingMatch.homeScore;
+                            let newAwayScore = editingMatch.awayScore;
+
+                            // Auto-increment score
+                            if (event.playerId) {
+                              if (oldType !== 'goal' && newType === 'goal') {
+                                if (event.playerId === editingMatch.homePlayerId) newHomeScore++;
+                                else if (event.playerId === editingMatch.awayPlayerId) newAwayScore++;
+                              } else if (oldType === 'goal' && newType !== 'goal') {
+                                if (event.playerId === editingMatch.homePlayerId) newHomeScore--;
+                                else if (event.playerId === editingMatch.awayPlayerId) newAwayScore--;
+                              }
+                            }
+
+                            setEditingMatch({ 
+                              ...editingMatch, 
+                              events: newEvents,
+                              homeScore: Math.max(0, newHomeScore),
+                              awayScore: Math.max(0, newAwayScore)
+                            });
                           }}
                           className="bg-transparent text-[10px] font-bold outline-none uppercase tracking-wider"
                         >
@@ -984,12 +1056,35 @@ export default function App() {
                         <select 
                           value={event.playerId}
                           onChange={e => {
+                            const newPlayerId = e.target.value;
+                            const oldPlayerId = event.playerId;
                             const newEvents = [...editingMatch.events];
-                            newEvents[idx].playerId = e.target.value;
-                            setEditingMatch({ ...editingMatch, events: newEvents });
+                            newEvents[idx].playerId = newPlayerId;
+
+                            let newHomeScore = editingMatch.homeScore;
+                            let newAwayScore = editingMatch.awayScore;
+
+                            // Auto-increment/decrement score if type is goal
+                            if (event.type === 'goal') {
+                              // Decrement old
+                              if (oldPlayerId === editingMatch.homePlayerId) newHomeScore--;
+                              else if (oldPlayerId === editingMatch.awayPlayerId) newAwayScore--;
+
+                              // Increment new
+                              if (newPlayerId === editingMatch.homePlayerId) newHomeScore++;
+                              else if (newPlayerId === editingMatch.awayPlayerId) newAwayScore++;
+                            }
+
+                            setEditingMatch({ 
+                              ...editingMatch, 
+                              events: newEvents,
+                              homeScore: Math.max(0, newHomeScore),
+                              awayScore: Math.max(0, newAwayScore)
+                            });
                           }}
                           className="flex-1 bg-transparent text-xs outline-none font-bold"
                         >
+                          <option value="" className="bg-[#02071a]">Oyuncu Seçiniz...</option>
                           <option value={editingMatch.homePlayerId} className="bg-[#02071a]">
                             {players.find(p => p.id === editingMatch.homePlayerId)?.name} (Kontrolünde)
                           </option>
@@ -1000,8 +1095,22 @@ export default function App() {
 
                         <button 
                           onClick={() => {
+                            let newHomeScore = editingMatch.homeScore;
+                            let newAwayScore = editingMatch.awayScore;
+
+                            // Auto-decrement score if a goal is removed
+                            if (event.type === 'goal' && event.playerId) {
+                              if (event.playerId === editingMatch.homePlayerId) newHomeScore--;
+                              else if (event.playerId === editingMatch.awayPlayerId) newAwayScore--;
+                            }
+
                             const newEvents = editingMatch.events.filter((_, i) => i !== idx);
-                            setEditingMatch({ ...editingMatch, events: newEvents });
+                            setEditingMatch({ 
+                              ...editingMatch, 
+                              events: newEvents,
+                              homeScore: Math.max(0, newHomeScore),
+                              awayScore: Math.max(0, newAwayScore)
+                            });
                           }}
                           className="text-red-400/60 hover:text-red-400 p-1"
                         >
@@ -1016,6 +1125,7 @@ export default function App() {
                           newEvents[idx].realPlayerName = e.target.value;
                           setEditingMatch({ ...editingMatch, events: newEvents });
                         }}
+                        list={`real-player-names-${event.playerId}`}
                         placeholder="Futbolcu İsmi (Örn: Mbappe)"
                         className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs outline-none focus:border-[#0047e0]"
                       />
